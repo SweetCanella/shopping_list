@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Страница не найдена – Список покупок{% endblock %}
+
+{% block content %}
+<h1 class="h3">Страница не найдена</h1>
+<p>Запрошенный адрес отсутствует.</p>
+<a href="{% url 'homepage:index' %}" class="btn btn-outline-secondary">
+    На главную
+</a>
+{% endblock %}

@@ -1,13 +1,7 @@
 """Обработчики проекта."""
-from django.http import HttpResponse
-
-from homepage.views import page
+from django.shortcuts import render
 
 
 def page_not_found(request, exception):
     """Вернуть страницу 404."""
-    html = page(
-        "Страница не найдена",
-        "<h1>Страница не найдена</h1>",
-    )
-    return HttpResponse(html, status=404)
+    return render(request, "404.html", status=404)

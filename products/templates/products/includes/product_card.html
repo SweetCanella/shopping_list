@@ -1,0 +1,12 @@
+<article class="product-card card shadow-sm mb-3">
+    <div class="card-body">
+        <h2 class="h5 card-title">{{ product.name }}</h2>
+        <p class="card-text">Количество: {{ product.quantity }}</p>
+        <a
+            href="{% url 'products:detail' product.id %}"
+            class="btn btn-outline-primary btn-sm"
+        >
+            Подробнее
+        </a>
+    </div>
+</article>

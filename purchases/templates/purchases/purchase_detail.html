@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Позиция №{{ purchase.id }} – Список покупок
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between">
+        <span class="text-muted">Информация о позиции</span>
+        <span class="fw-semibold">№{{ purchase.id }}</span>
+    </div>
+    <div class="card-body">
+        <h1 class="card-title h3 mb-4">Позиция №{{ purchase.id }}</h1>
+        <p class="card-text">
+            <strong>Товар:</strong> {{ purchase.product.name }}
+        </p>
+        <p class="card-text">
+            <strong>Количество:</strong> {{ purchase.product.quantity }}
+        </p>
+        <p class="card-text">
+            <strong>Пользователь:</strong> {{ purchase.user.name }}
+        </p>
+        <p class="card-text">
+            <strong>Электронная почта:</strong> {{ purchase.user.email }}
+        </p>
+        <p class="card-text">
+            <strong>Дата:</strong>
+            {{ purchase.purchase_date|date:"d.m.Y" }}
+        </p>
+        <p class="card-text mb-4">
+            <strong>Статус:</strong>
+            {% include "purchases/includes/purchase_status.html" %}
+        </p>
+        <a
+            href="{% url 'purchases:list' %}"
+            class="btn btn-outline-secondary"
+        >
+            К списку покупок
+        </a>
+    </div>
+</div>
+{% endblock %}

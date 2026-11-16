@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Список покупок{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">Список покупок</h1>
+{% for purchase in purchases %}
+<article class="card shadow-sm mb-3">
+    <div class="card-body">
+        <h2 class="h5">{{ purchase.product_name }}</h2>
+        <p>Количество: {{ purchase.quantity }}</p>
+        <p>Пользователь: {{ purchase.user_name }}</p>
+        <p>Дата: {{ purchase.purchase_date|date:"d.m.Y" }}</p>
+        <a
+            href="{% url 'purchases:detail' purchase.id %}"
+            class="btn btn-outline-primary btn-sm"
+        >
+            Подробнее
+        </a>
+    </div>
+</article>
+{% empty %}
+<p>Активные позиции не найдены.</p>
+{% endfor %}
+{% endblock %}
