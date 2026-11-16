@@ -1,7 +1,10 @@
 """Сохранение и загрузка данных проекта в JSON."""
 import json
-from datetime import date
 from pathlib import Path
+
+from models.products import Product
+from models.purchases import Purchase
+from models.users import User
 
 
 def _read_json(filename: Path) -> list:
@@ -25,38 +28,49 @@ def _write_json(filename: Path, payload: list) -> None:
         json.dump(payload, target, ensure_ascii=False, indent=4)
 
 
-def load_products(filename: Path) -> dict[int, dict]:
+def load_products(filename: Path) -> dict[int, Product]:
     """Загрузить товары из JSON-файла."""
     products = {}
     for item in _read_json(filename):
-        products[item["id"]] = item
+        product = Product.from_dict(item)
+        products[product.id] = product
     return products
 
 
-def save_products(filename: Path, products: dict[int, dict]) -> None:
+def save_products(filename: Path, products: dict[int, Product]) -> None:
     """Сохранить товары в JSON-файл."""
-    _write_json(filename, list(products.values()))
+    payload = [product.to_dict() for product in products.values()]
+    _write_json(filename, payload)
 
 
-def load_purchases(filename: Path) -> list[dict]:
+def load_users(filename: Path) -> dict[int, User]:
+    """Загрузить пользователей из JSON-файла."""
+    users = {}
+    for item in _read_json(filename):
+        user = User.from_dict(item)
+        users[user.id] = user
+    return users
+
+
+def save_users(filename: Path, users: dict[int, User]) -> None:
+    """Сохранить пользователей в JSON-файл."""
+    payload = [user.to_dict() for user in users.values()]
+    _write_json(filename, payload)
+
+
+def load_purchases(
+    filename: Path,
+    products: dict[int, Product],
+    users: dict[int, User],
+) -> list[Purchase]:
     """Загрузить позиции списка из JSON-файла."""
     purchases = []
     for item in _read_json(filename):
-        purchases.append({
-            "id": item["id"],
-            "product_id": item["product_id"],
-            "purchase_date": date.fromisoformat(item["purchase_date"]),
-        })
+        purchases.append(Purchase.from_dict(item, products, users))
     return purchases
 
 
-def save_purchases(filename: Path, purchases: list[dict]) -> None:
+def save_purchases(filename: Path, purchases: list[Purchase]) -> None:
     """Сохранить позиции списка в JSON-файл."""
-    payload = []
-    for purchase in purchases:
-        payload.append({
-            "id": purchase["id"],
-            "product_id": purchase["product_id"],
-            "purchase_date": purchase["purchase_date"].isoformat(),
-        })
+    payload = [purchase.to_dict() for purchase in purchases]
     _write_json(filename, payload)
