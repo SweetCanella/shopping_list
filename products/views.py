@@ -1,10 +1,10 @@
-"""Страницы товаров читают данные из SQLite."""
+"""Представления товаров."""
 from datetime import datetime
 
-from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
-from db.database import get_connection
+from products.models import Product
+from purchases.models import Purchase
 
 
 def product_list(request):
@@ -13,38 +13,24 @@ def product_list(request):
     min_quantity = request.GET.get("min_quantity", "").strip()
     sort = request.GET.get("sort", "name")
     error = None
-    clauses = []
-    params = []
+
+    products = Product.objects.all()
     if query:
-        clauses.append("name LIKE ?")
-        params.append(f"%{query}%")
+        products = products.filter(name__icontains=query)
     if min_quantity:
         if min_quantity.isdigit():
-            clauses.append("quantity >= ?")
-            params.append(int(min_quantity))
+            products = products.filter(
+                quantity__gte=int(min_quantity),
+            )
         else:
             error = "Укажите корректное количество."
-    where = ""
-    if clauses:
-        where = "WHERE " + " AND ".join(clauses)
+
     if sort == "quantity":
-        order = "quantity DESC, name"
+        products = products.order_by("-quantity", "name")
     else:
         sort = "name"
-        order = "name"
-    connection = get_connection()
-    try:
-        products = connection.execute(
-            f"""
-            SELECT id, name, quantity
-            FROM products
-            {where}
-            ORDER BY {order}
-            """,
-            params,
-        ).fetchall()
-    finally:
-        connection.close()
+        products = products.order_by("name")
+
     context = {
         "products": products,
         "query": query,
@@ -57,20 +43,7 @@ def product_list(request):
 
 def product_detail(request, product_id):
     """Показать карточку товара."""
-    connection = get_connection()
-    try:
-        product = connection.execute(
-            """
-            SELECT id, name, quantity
-            FROM products
-            WHERE id = ?
-            """,
-            (product_id,),
-        ).fetchone()
-    finally:
-        connection.close()
-    if product is None:
-        raise Http404
+    product = get_object_or_404(Product, pk=product_id)
     return render(
         request,
         "products/product_detail.html",
@@ -79,36 +52,30 @@ def product_detail(request, product_id):
 
 
 def available_products(request):
-    """Найти товары без активной позиции на выбранную дату."""
+    """Найти товары, которых нет в активном списке на дату."""
     purchase_date = request.GET.get("date", "").strip()
-    products = []
+    products_list = []
     error = None
+
     if purchase_date:
         try:
-            datetime.strptime(purchase_date, "%Y-%m-%d")
+            selected_date = datetime.strptime(
+                purchase_date,
+                "%Y-%m-%d",
+            ).date()
         except ValueError:
             error = "Укажите корректную дату."
         else:
-            connection = get_connection()
-            try:
-                products = connection.execute(
-                    """
-                    SELECT id, name, quantity
-                    FROM products
-                    WHERE id NOT IN (
-                        SELECT product_id
-                        FROM purchases
-                        WHERE purchase_date = ?
-                            AND is_cancelled = 0
-                    )
-                    ORDER BY name
-                    """,
-                    (purchase_date,),
-                ).fetchall()
-            finally:
-                connection.close()
+            busy_ids = Purchase.objects.filter(
+                purchase_date=selected_date,
+                is_cancelled=False,
+            ).values_list("product_id", flat=True)
+            products_list = Product.objects.exclude(
+                pk__in=busy_ids,
+            ).order_by("name")
+
     context = {
-        "products": products,
+        "products": products_list,
         "purchase_date": purchase_date,
         "error": error,
     }
