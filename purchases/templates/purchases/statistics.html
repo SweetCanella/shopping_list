@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Статистика – Список покупок{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">Статистика покупок</h1>
+<p>Активных позиций: {{ purchases_count }}</p>
+{% for item in statistics %}
+<article class="mb-3">
+    <h2 class="h5">{{ item.product_name }}</h2>
+    <p>Активных позиций: {{ item.purchases_count }}</p>
+</article>
+{% empty %}
+<p>Товары отсутствуют.</p>
+{% endfor %}
+<h2 class="h4 mt-4">Товары с числом позиций больше одного</h2>
+{% for product in popular %}
+<article class="mb-3">
+    <h3 class="h5">{{ product.name }}</h3>
+    <p>Активных позиций: {{ product.purchases_count }}</p>
+</article>
+{% empty %}
+<p>Таких товаров нет.</p>
+{% endfor %}
+{% endblock %}

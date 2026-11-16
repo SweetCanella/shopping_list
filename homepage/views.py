@@ -1,27 +1,27 @@
-"""Представление главной страницы."""
-from pathlib import Path
-
+"""Главная страница читает сводку из SQLite."""
 from django.shortcuts import render
 
-from storage import load_products, load_purchases, load_users
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-PRODUCTS_FILE = BASE_DIR / "data" / "products.json"
-USERS_FILE = BASE_DIR / "data" / "users.json"
-PURCHASES_FILE = BASE_DIR / "data" / "purchases.json"
+from db.database import get_connection
 
 
 def index(request):
-    """Показать сводку по товарам и активным позициям."""
-    products = load_products(PRODUCTS_FILE)
-    users = load_users(USERS_FILE)
-    purchases = load_purchases(PURCHASES_FILE, products, users)
-    active = [
-        purchase for purchase in purchases
-        if not purchase.is_cancelled
-    ]
+    """Показать число товаров и активных позиций."""
+    connection = get_connection()
+    try:
+        products_count = connection.execute(
+            "SELECT COUNT(*) AS total FROM products"
+        ).fetchone()["total"]
+        purchases_count = connection.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM purchases
+            WHERE is_cancelled = 0
+            """
+        ).fetchone()["total"]
+    finally:
+        connection.close()
     context = {
-        "products_count": len(products),
-        "purchases_count": len(active),
+        "products_count": products_count,
+        "purchases_count": purchases_count,
     }
     return render(request, "homepage/index.html", context)

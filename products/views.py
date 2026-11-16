@@ -1,13 +1,10 @@
-"""Страницы товаров на шаблонах Django."""
-from pathlib import Path
+"""Страницы товаров читают данные из SQLite."""
+from datetime import datetime
 
 from django.http import Http404
 from django.shortcuts import render
 
-from storage import load_products
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-PRODUCTS_FILE = BASE_DIR / "data" / "products.json"
+from db.database import get_connection
 
 
 def product_list(request):
@@ -16,29 +13,38 @@ def product_list(request):
     min_quantity = request.GET.get("min_quantity", "").strip()
     sort = request.GET.get("sort", "name")
     error = None
-    products = list(load_products(PRODUCTS_FILE).values())
+    clauses = []
+    params = []
     if query:
-        prepared = query.casefold()
-        products = [
-            product for product in products
-            if prepared in product.name.casefold()
-        ]
+        clauses.append("name LIKE ?")
+        params.append(f"%{query}%")
     if min_quantity:
         if min_quantity.isdigit():
-            border = int(min_quantity)
-            products = [
-                product for product in products
-                if product.quantity >= border
-            ]
+            clauses.append("quantity >= ?")
+            params.append(int(min_quantity))
         else:
             error = "Укажите корректное количество."
+    where = ""
+    if clauses:
+        where = "WHERE " + " AND ".join(clauses)
     if sort == "quantity":
-        products.sort(
-            key=lambda product: (-product.quantity, product.name),
-        )
+        order = "quantity DESC, name"
     else:
         sort = "name"
-        products.sort(key=lambda product: product.name)
+        order = "name"
+    connection = get_connection()
+    try:
+        products = connection.execute(
+            f"""
+            SELECT id, name, quantity
+            FROM products
+            {where}
+            ORDER BY {order}
+            """,
+            params,
+        ).fetchall()
+    finally:
+        connection.close()
     context = {
         "products": products,
         "query": query,
@@ -51,7 +57,18 @@ def product_list(request):
 
 def product_detail(request, product_id):
     """Показать карточку товара."""
-    product = load_products(PRODUCTS_FILE).get(product_id)
+    connection = get_connection()
+    try:
+        product = connection.execute(
+            """
+            SELECT id, name, quantity
+            FROM products
+            WHERE id = ?
+            """,
+            (product_id,),
+        ).fetchone()
+    finally:
+        connection.close()
     if product is None:
         raise Http404
     return render(
@@ -59,3 +76,40 @@ def product_detail(request, product_id):
         "products/product_detail.html",
         {"product": product},
     )
+
+
+def available_products(request):
+    """Найти товары без активной позиции на выбранную дату."""
+    purchase_date = request.GET.get("date", "").strip()
+    products = []
+    error = None
+    if purchase_date:
+        try:
+            datetime.strptime(purchase_date, "%Y-%m-%d")
+        except ValueError:
+            error = "Укажите корректную дату."
+        else:
+            connection = get_connection()
+            try:
+                products = connection.execute(
+                    """
+                    SELECT id, name, quantity
+                    FROM products
+                    WHERE id NOT IN (
+                        SELECT product_id
+                        FROM purchases
+                        WHERE purchase_date = ?
+                            AND is_cancelled = 0
+                    )
+                    ORDER BY name
+                    """,
+                    (purchase_date,),
+                ).fetchall()
+            finally:
+                connection.close()
+    context = {
+        "products": products,
+        "purchase_date": purchase_date,
+        "error": error,
+    }
+    return render(request, "products/available.html", context)

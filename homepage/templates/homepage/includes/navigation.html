@@ -12,8 +12,18 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{% url 'products:available' %}">
+                    Свободные товары
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="{% url 'purchases:list' %}">
                     Список покупок
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'purchases:statistics' %}">
+                    Статистика
                 </a>
             </li>
         </ul>

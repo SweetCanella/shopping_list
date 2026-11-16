@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Свободные товары – Список покупок{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">Свободные товары</h1>
+<form method="get" class="mb-4">
+    <label for="date" class="form-label">Дата</label>
+    <input
+        type="date"
+        id="date"
+        name="date"
+        class="form-control mb-3"
+        value="{{ purchase_date }}"
+    >
+    <button type="submit" class="btn btn-primary">Найти</button>
+</form>
+{% if error %}
+<p class="text-danger">{{ error }}</p>
+{% endif %}
+{% if purchase_date and not error %}
+<h2 class="h5">Дата: {{ purchase_date }}</h2>
+{% for product in products %}
+    {% include "products/includes/product_card.html" %}
+{% empty %}
+<p>На выбранную дату свободных товаров нет.</p>
+{% endfor %}
+{% endif %}
+{% endblock %}
