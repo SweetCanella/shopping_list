@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     "homepage",
     "products",
     "purchases",
+    "users",
 ]
 
 MIDDLEWARE = [
