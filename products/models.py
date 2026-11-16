@@ -11,6 +11,7 @@ class Product(models.Model):
     )
     quantity = models.PositiveIntegerField(
         verbose_name="Количество",
+        help_text="Укажите, сколько единиц товара нужно купить.",
     )
 
     def is_enough_for(self, needed):
