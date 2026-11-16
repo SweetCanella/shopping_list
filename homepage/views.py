@@ -8,7 +8,7 @@ from purchases.models import Purchase
 
 def index(request):
     """Показать сводку по товарам и активным позициям."""
-    summary = Purchase.objects.filter(is_cancelled=False).aggregate(
+    summary = Purchase.objects.active().aggregate(
         purchases_count=Count("id"),
     )
     context = {

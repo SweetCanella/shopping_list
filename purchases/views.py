@@ -19,7 +19,7 @@ def purchase_list(request):
     sort = request.GET.get("sort", "date")
     error = None
 
-    purchases_data = Purchase.objects.filter(is_cancelled=False)
+    purchases_data = Purchase.objects.active()
 
     if purchase_date:
         try:
@@ -100,12 +100,10 @@ def purchase_detail(request, purchase_id):
 
 def statistics(request):
     """Показать число активных позиций по каждому товару."""
+    active = Q(purchases__status=Purchase.Status.ACTIVE)
     statistics_data = (
         Product.objects.annotate(
-            purchases_count=Count(
-                "purchases",
-                filter=Q(purchases__is_cancelled=False),
-            ),
+            purchases_count=Count("purchases", filter=active),
             product_name=F("name"),
         )
         .values("product_name", "purchases_count")
@@ -113,20 +111,37 @@ def statistics(request):
     )
     popular = (
         Product.objects.annotate(
-            purchases_count=Count(
-                "purchases",
-                filter=Q(purchases__is_cancelled=False),
-            ),
+            purchases_count=Count("purchases", filter=active),
         )
         .filter(purchases_count__gt=1)
         .order_by("-purchases_count", "name")
     )
-    summary = Purchase.objects.filter(is_cancelled=False).aggregate(
-        purchases_count=Count("id"),
+    summary = Purchase.objects.aggregate(
+        purchases_count=Count(
+            "id",
+            filter=Q(status=Purchase.Status.ACTIVE),
+        ),
+        total_purchases=Count("id"),
+        active_purchases=Count(
+            "id",
+            filter=Q(status=Purchase.Status.ACTIVE),
+        ),
+        cancelled_purchases=Count(
+            "id",
+            filter=Q(status=Purchase.Status.CANCELLED),
+        ),
+        completed_purchases=Count(
+            "id",
+            filter=Q(status=Purchase.Status.COMPLETED),
+        ),
     )
     context = {
         "statistics": statistics_data,
         "popular": popular,
         "purchases_count": summary["purchases_count"],
+        "total_purchases": summary["total_purchases"],
+        "active_purchases": summary["active_purchases"],
+        "cancelled_purchases": summary["cancelled_purchases"],
+        "completed_purchases": summary["completed_purchases"],
     }
     return render(request, "purchases/statistics.html", context)

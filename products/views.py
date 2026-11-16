@@ -41,9 +41,9 @@ def product_list(request):
     return render(request, "products/product_list.html", context)
 
 
-def product_detail(request, product_id):
+def product_detail(request, slug):
     """Показать карточку товара."""
-    product = get_object_or_404(Product, pk=product_id)
+    product = get_object_or_404(Product, slug=slug)
     return render(
         request,
         "products/product_detail.html",
@@ -66,10 +66,12 @@ def available_products(request):
         except ValueError:
             error = "Укажите корректную дату."
         else:
-            busy_ids = Purchase.objects.filter(
-                purchase_date=selected_date,
-                is_cancelled=False,
-            ).values_list("product_id", flat=True)
+            busy_ids = (
+                Purchase.objects
+                .active()
+                .filter(purchase_date=selected_date)
+                .values_list("product_id", flat=True)
+            )
             products_list = Product.objects.exclude(
                 pk__in=busy_ids,
             ).order_by("name")

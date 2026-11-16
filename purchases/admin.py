@@ -15,11 +15,11 @@ class PurchaseAdmin(admin.ModelAdmin):
         "user",
         "product_quantity",
         "purchase_date",
-        "is_cancelled",
+        "status",
     )
     list_display_links = ("id",)
     search_fields = ("product__name", "user__name")
-    list_filter = ("purchase_date", "is_cancelled")
+    list_filter = ("purchase_date", "status")
     ordering = ("-purchase_date",)
     list_per_page = 20
     readonly_fields = ("id",)
@@ -56,7 +56,7 @@ class PurchaseAdmin(admin.ModelAdmin):
     @admin.action(description="Вернуть в активные")
     def restore_purchases(self, request, queryset):
         """Вернуть отмеченные позиции в активное состояние."""
-        updated = queryset.update(is_cancelled=False)
+        updated = queryset.update(status=Purchase.Status.ACTIVE)
         self.message_user(
             request,
             f"Возвращено позиций: {updated}.",

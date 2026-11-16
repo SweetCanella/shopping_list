@@ -18,9 +18,11 @@
 
 ## Основные сущности
 
-- Товар: название и количество.
+- Товар: название, количество, признак большого количества и адрес
+  страницы.
 - Пользователь: имя и электронная почта.
-- Позиция списка: товар, пользователь, дата покупки и признак вычёркивания.
+- Позиция списка: товар, пользователь, дата покупки и статус
+  «Активно», «Отменено» или «Завершено».
 
 Один товар входит в несколько позиций. Один пользователь создаёт несколько
 позиций. Каждая позиция относится к одному товару и одному пользователю.
@@ -38,13 +40,12 @@
 
 ## План развития
 
-Уже сделано: консольное приложение, веб-страницы Django, база SQLite
-и доступ к данным через Django ORM.
+Уже сделано: консольное приложение, веб-страницы Django, база SQLite,
+доступ к данным через Django ORM и административная панель.
 
 На следующих этапах планируется:
 
 - формы создания и изменения данных;
-- настройка административной панели;
 - регистрация и авторизация пользователей;
 - разработка API;
 - контейнеризация приложения;
@@ -75,10 +76,19 @@ shopping_list/
 
 ## Модели Django
 
-- `Product`: `name`, `quantity`;
+- `Product`: `name`, `quantity`, вычисляемое поле `is_large`
+  (количество от 5), уникальный `slug`;
 - `User`: `name`, `email`;
 - `Purchase`: внешние ключи `product` и `user` (`on_delete=PROTECT`,
-  `related_name="purchases"`), `purchase_date`, `is_cancelled`.
+  `related_name="purchases"`), `purchase_date`, `status`.
+
+Статусы позиции: `active`, `cancelled`, `completed`. Товар на дату
+занимает только активная позиция. Вычеркнутая и завершённая позиции
+запись не удаляют. Выборки доступны как `Purchase.objects.active()`,
+`cancelled()`, `completed()` и `for_date()`.
+
+Адрес карточки товара строится методом `get_absolute_url()` из
+транслитерации названия и идентификатора, например `/products/moloko-1/`.
 
 Связанные позиции доступны как `product.purchases.all()` и
 `user.purchases.all()`.
@@ -107,10 +117,12 @@ python manage.py makemigrations
 python manage.py migrate
 python db/import_sqlite_to_orm.py
 python manage.py check
+python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Исходная база ПР7: `data/shoplist.sqlite`.
+Исходная база ПР7: `data/shoplist.sqlite`. В ней по-прежнему хранится
+признак `is_cancelled`. При переносе в Django он становится статусом.
 База Django: `db.sqlite3` в корне проекта. Файл создаётся миграциями и
 в репозиторий не входит. После клонирования его нужно создать командами
 выше.
@@ -119,11 +131,16 @@ python manage.py runserver
 
 - `/` — главная;
 - `/products/` — товары;
-- `/products/<id>/` — карточка товара;
+- `/products/<slug>/` — карточка товара;
 - `/products/available/` — свободные товары на дату;
 - `/purchases/` — список покупок;
 - `/purchases/<id>/` — карточка позиции;
-- `/purchases/statistics/` — статистика.
+- `/purchases/statistics/` — статистика;
+- `/admin/` — административная панель.
+
+В панели зарегистрированы товары, пользователи и позиции. У товара и
+пользователя на карточке видны связанные позиции. Панель отладки
+Django Debug Toolbar доступна при локальном запуске с `DEBUG=True`.
 
 ## Проверки
 
@@ -131,5 +148,7 @@ python manage.py runserver
 pytest -v
 flake8
 python manage.py check
+python manage.py makemigrations --check
 python manage.py showmigrations
+python manage.py test
 ```

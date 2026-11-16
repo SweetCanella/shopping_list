@@ -7,6 +7,10 @@
     <div class="card-body">
         <h1 class="h3 card-title">{{ product.name }}</h1>
         <p class="card-text">Количество: {{ product.quantity }}</p>
+        <p class="card-text">
+            Большое количество:
+            {% if product.is_large %}да{% else %}нет{% endif %}
+        </p>
         <a
             href="{% url 'products:list' %}"
             class="btn btn-outline-secondary"

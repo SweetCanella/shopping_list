@@ -82,7 +82,11 @@ def main():
                         "purchase_date": date.fromisoformat(
                             row["purchase_date"]
                         ),
-                        "is_cancelled": bool(row["is_cancelled"]),
+                        "status": (
+                            "cancelled"
+                            if row["is_cancelled"]
+                            else "active"
+                        ),
                     },
                 )
             sequence_sql = django_connection.ops.sequence_reset_sql(

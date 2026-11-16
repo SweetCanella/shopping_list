@@ -10,7 +10,7 @@ class PurchaseInline(admin.TabularInline):
     """Связанные позиции на странице пользователя."""
 
     model = Purchase
-    fields = ("product", "purchase_date", "is_cancelled")
+    fields = ("product", "purchase_date", "status")
     extra = 0
     can_delete = False
 

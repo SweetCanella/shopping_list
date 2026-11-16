@@ -4,7 +4,10 @@
 
 {% block content %}
 <h1 class="h3 mb-3">Статистика покупок</h1>
-<p>Активных позиций: {{ purchases_count }}</p>
+<p>Активных позиций: {{ active_purchases }}</p>
+<p>Вычеркнутых позиций: {{ cancelled_purchases }}</p>
+<p>Завершённых позиций: {{ completed_purchases }}</p>
+<p>Всего позиций: {{ total_purchases }}</p>
 {% for item in statistics %}
 <article class="mb-3">
     <h2 class="h5">{{ item.product_name }}</h2>

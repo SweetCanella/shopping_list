@@ -1,5 +1,13 @@
-{% if purchase.is_cancelled %}
-<span class="badge bg-danger purchase-status">Позиция вычеркнута</span>
+{% if purchase.status == "active" %}
+<span class="badge bg-success purchase-status">
+    {{ purchase.get_status_display }}
+</span>
+{% elif purchase.status == "cancelled" %}
+<span class="badge bg-danger purchase-status">
+    {{ purchase.get_status_display }}
+</span>
 {% else %}
-<span class="badge bg-success purchase-status">Позиция в списке</span>
+<span class="badge bg-secondary purchase-status">
+    {{ purchase.get_status_display }}
+</span>
 {% endif %}
