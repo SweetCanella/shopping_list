@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "product_id": 1,
+        "purchase_date": "2026-09-20"
+    },
+    {
+        "id": 2,
+        "product_id": 2,
+        "purchase_date": "2026-09-21"
+    }
+]
